@@ -146,6 +146,12 @@ document.onkeydown = event => {
   }
 };
 
+canvas.onclick = (e) => {
+  console.log(e)
+  player.y = CANVAS_HEIGHT * e.layerY / canvas.clientHeight
+  pokeballs.push(new Pokeball(player));
+}
+
 document.onkeyup = event => {
   // left
   if (event.keyCode === 37) {

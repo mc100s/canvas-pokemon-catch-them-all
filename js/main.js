@@ -4,15 +4,15 @@ const ctx = canvas.getContext("2d");
 // Constants
 const CANVAS_WIDTH = canvas.width;
 const CANVAS_HEIGHT = canvas.height;
-const GRAVITY = 1;
-const BOUNCING_SPEED = -25;
 const SCORE_BALL_SPEED = 2;
-const FRAMES_BETWEEN_SCORE_BALLS = 120;
+const FRAMES_BETWEEN_POKEMONS = 50;
+const DEBUG = false;
 
 // Global variables
 let frame = 0; // The frame counter
 let player = new Player();
-let scoreBalls = [];
+let pokemons = [];
+let bg = new Background();
 
 function animation() {
   updateEverything();
@@ -26,14 +26,31 @@ animation();
 function drawEverything(ctx) {
   ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 
+  if (player.life > 0) drawGame(ctx);
+  else drawGameOver(ctx);
+}
+
+function drawGame(ctx) {
+  bg.draw(ctx);
+
   player.draw(ctx);
 
-  // Draw all scoreBalls
-  for (let i = 0; i < scoreBalls.length; i++) {
-    scoreBalls[i].draw(ctx);
+  // Draw all pokemons
+  for (let i = 0; i < pokemons.length; i++) {
+    pokemons[i].draw(ctx);
   }
 
   drawScore(ctx);
+}
+
+function drawGameOver(ctx) {
+  ctx.save();
+  ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  ctx.font = "100px Arial";
+  ctx.textAlign = "center";
+  ctx.fillStyle = "white";
+  ctx.fillText("GAME OVER", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 30);
+  ctx.restore();
 }
 
 // updateEverything update variables
@@ -41,29 +58,30 @@ function drawEverything(ctx) {
 function updateEverything() {
   frame++;
 
-  // Create new ScoreBall every FRAMES_BETWEEN_SCORE_BALLS frames
-  if (frame % FRAMES_BETWEEN_SCORE_BALLS === 0) {
-    scoreBalls.push(new ScoreBall());
+  // Create new Pokemon every FRAMES_BETWEEN_POKEMONS frames
+  if (frame % FRAMES_BETWEEN_POKEMONS === 0) {
+    pokemons.push(new Pokemon());
   }
 
+  bg.update();
   player.update();
 
-  // Update all scoreBalls and check for collision
-  for (let i = scoreBalls.length - 1; i >= 0; i--) {
-    scoreBalls[i].update();
-    if (checkCollision(player, scoreBalls[i])) {
-      player.score += scoreBalls[i].score;
-      scoreBalls.splice(i, 1);
+  // Update all pokemons and check for collision
+  for (let i = pokemons.length - 1; i >= 0; i--) {
+    pokemons[i].update();
+    if (checkCollision(player, pokemons[i])) {
+      player.life--;
+      pokemons.splice(i, 1);
     }
   }
 
-  removeUselessScoreBalls();
+  removeUselessPokemons();
 }
 
 function drawScore(ctx) {
   ctx.save();
   ctx.font = "40px Arial";
-  ctx.fillText("Score: " + player.score, CANVAS_WIDTH - 220, 60);
+  ctx.fillText("Life: " + player.life + "❤️", CANVAS_WIDTH - 220, 60);
   ctx.restore();
 }
 
@@ -71,14 +89,14 @@ function distance(a, b) {
   return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
 }
 
-// Return true when player and scoreBall are colliding
-function checkCollision(player, scoreBall) {
-  return distance(player, scoreBall) < player.radius + scoreBall.radius;
+// Return true when player and pokemon are colliding
+function checkCollision(player, pokemon) {
+  return distance(player, pokemon) < player.radius + pokemon.radius;
 }
 
-function removeUselessScoreBalls() {
-  scoreBalls = scoreBalls.filter(scoreBall => {
-    return scoreBall.y - scoreBall.radius - 20 < CANVAS_HEIGHT;
+function removeUselessPokemons() {
+  pokemons = pokemons.filter(pokemon => {
+    return pokemon.x + pokemon.radius + 20 > 0;
   });
 }
 
@@ -87,10 +105,38 @@ document.onkeydown = event => {
   console.log(event.keyCode);
   // left
   if (event.keyCode === 37) {
-    player.vx = -10;
+    player.vx = -5;
   }
   // right
   if (event.keyCode === 39) {
-    player.vx = 10;
+    player.vx = 5;
+  }
+  // up
+  if (event.keyCode === 38) {
+    player.vy = -5;
+  }
+  // down
+  if (event.keyCode === 40) {
+    player.vy = 5;
+  }
+};
+
+document.onkeyup = event => {
+  console.log(event.keyCode);
+  // left
+  if (event.keyCode === 37) {
+    player.vx = 0;
+  }
+  // right
+  if (event.keyCode === 39) {
+    player.vx = 0;
+  }
+  // up
+  if (event.keyCode === 38) {
+    player.vy = 0;
+  }
+  // down
+  if (event.keyCode === 40) {
+    player.vy = 0;
   }
 };

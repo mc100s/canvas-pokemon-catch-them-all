@@ -12,6 +12,7 @@ const DEBUG = false;
 let frame = 0; // The frame counter
 let player = new Player();
 let pokemons = [];
+let pokeballs = [];
 let bg = new Background();
 
 function animation() {
@@ -40,6 +41,10 @@ function drawGame(ctx) {
     pokemons[i].draw(ctx);
   }
 
+  for (let i = 0; i < pokeballs.length; i++) {
+    pokeballs[i].draw(ctx);
+  }
+
   drawScore(ctx);
 }
 
@@ -66,12 +71,28 @@ function updateEverything() {
   bg.update();
   player.update();
 
-  // Update all pokemons and check for collision
+  // Update all pokeballspokeballs
+  for (let i = 0; i < pokeballs.length; i++) {
+    pokeballs[i].update();
+  }
+
+  // Update all pokemons
   for (let i = pokemons.length - 1; i >= 0; i--) {
     pokemons[i].update();
-    if (checkCollision(player, pokemons[i])) {
+  }
+
+  // Check collision between pokemons+player and pokemons+pokeballs 
+  for (let iPokemon = pokemons.length - 1; iPokemon >= 0; iPokemon--) {
+    if (checkCollision(player, pokemons[iPokemon])) {
       player.life--;
-      pokemons.splice(i, 1);
+      pokemons.splice(iPokemon, 1);
+    }
+    for (let iPokeball = pokeballs.length-1; iPokeball >= 0; iPokeball--) {
+      if (checkCollision(pokeballs[iPokeball], pokemons[iPokemon])) {
+        pokemons.splice(iPokemon, 1);
+        pokeballs.splice(iPokeball, 1);
+        break;
+      }
     }
   }
 
@@ -81,7 +102,7 @@ function updateEverything() {
 function drawScore(ctx) {
   ctx.save();
   ctx.font = "40px Arial";
-  ctx.fillText("Life: " + player.life + "❤️", CANVAS_WIDTH - 220, 60);
+  ctx.fillText("Life: " + "❤️".repeat(player.life), CANVAS_WIDTH - 220, 60);
   ctx.restore();
 }
 
@@ -90,8 +111,8 @@ function distance(a, b) {
 }
 
 // Return true when player and pokemon are colliding
-function checkCollision(player, pokemon) {
-  return distance(player, pokemon) < player.radius + pokemon.radius;
+function checkCollision(a, b) {
+  return distance(a, b) < a.radius + b.radius;
 }
 
 function removeUselessPokemons() {
@@ -119,10 +140,13 @@ document.onkeydown = event => {
   if (event.keyCode === 40) {
     player.vy = 5;
   }
+  // space
+  if (event.keyCode === 32) {
+    pokeballs.push(new Pokeball(player));
+  }
 };
 
 document.onkeyup = event => {
-  console.log(event.keyCode);
   // left
   if (event.keyCode === 37) {
     player.vx = 0;
